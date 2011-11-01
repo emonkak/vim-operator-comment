@@ -105,6 +105,9 @@ function! operator#comment#uncomment(motion_wiseness)  "{{{2
       normal! "_d
 
       call cursor(begin_pos)
+      if col('.') == col('$') - len(comment[0])
+        call search('\s\+', 'Wb', line('.'))
+      endif
       normal! v
       call search('\V' . comment[0] . '\+\s\?', 'We', line('.'))
       normal! "_d
@@ -121,6 +124,9 @@ function! operator#comment#uncomment(motion_wiseness)  "{{{2
         continue
       endif
 
+      if col('.') == col('$') - len(comment[0])
+        call search('\s\+', 'Wb', line('.'))
+      endif
       normal! v
       call search('\V' . comment[0] . '\+\s\?', 'We', line('.'))
       normal! "_d$
