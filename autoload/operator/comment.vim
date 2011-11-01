@@ -33,7 +33,7 @@ function! operator#comment#comment(motion_wiseness)  "{{{2
 
   let lines = range(lnum1, lnum2)
   if a:motion_wiseness ==# "line"
-    call map(lines, '[v:val, 1]')
+    call map(lines, '[v:val, 0]')
   elseif a:motion_wiseness ==# 'block'
     call map(lines, '[v:val, col1]')
   else  " char
@@ -52,8 +52,14 @@ function! operator#comment#comment(motion_wiseness)  "{{{2
     let @" = comment[0] . (col('$') > 1 ? ' ' : '')
     normal! P`[
   else
+    let last_col = 0
     for [lnum, col] in lines
       call cursor(lnum, col)
+      normal! ^
+      if last_col < col('.')
+        call cursor(0, last_col)
+      endif
+      let last_col = col('.')
       let @" = comment[0] . (col('$') > 1 ? ' ' : '')
       normal! P`[
     endfor
