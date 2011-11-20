@@ -149,7 +149,7 @@ endfunction
 
 function! s:comment_the_cursor_p()  "{{{2
   for id in synstack(line('.'), col('.'))
-    if synIDattr(synIDtrans(id), 'name') == 'Comment'
+    if synIDattr(synIDtrans(id), 'name') ==# 'Comment'
       return 1
     endif
   endfor
