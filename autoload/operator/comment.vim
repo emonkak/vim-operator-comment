@@ -23,117 +23,26 @@
 " }}}
 " Interface  "{{{1
 function! operator#comment#comment(motion_wiseness)  "{{{2
-  let reg_u = [@", getregtype('"')]
-
   let comment = s:comment_pair()
-  let comment_multi_line_p = len(comment) > 1
 
-  let [lnum1, col1] = getpos("'[")[1:2]
-  let [lnum2, col2] = getpos("']")[1:2]
-
-  let lines = range(lnum1, lnum2)
-  if a:motion_wiseness ==# "line"
-    call map(lines, '[v:val, 1]')
-  elseif a:motion_wiseness ==# 'block'
-    call map(lines, '[v:val, col1]')
-  else  " char
-    call map(lines, '[v:val, 1]')
-    let lines[0] = [lnum1, col1]
-  endif
-
-  if comment_multi_line_p
-    call cursor(lines[-1][0], col2)
-    if a:motion_wiseness ==# 'line'
-      normal! $
-    endif
-    let @" = (col('$') > 1 ? ' ' : '') . comment[1]
-    normal! p
-    call cursor(lines[0])
-    let @" = comment[0] . (col('$') > 1 ? ' ' : '')
-    normal! P`[
+  if len(comment) > 1
+    call s:do_comment_multiline(a:motion_wiseness, comment)
   else
-    let last_col = 0
-    for [lnum, col] in lines
-      call cursor(lnum, 0)
-      normal! ^
-      if last_col < col('.')
-        call cursor(0, last_col)
-      endif
-      let @" = repeat(' ', last_col - col('$'))
-      \      . comment[0] . (col('$') > 1 ? ' ' : '')
-      if col('$') > 1
-        let last_col = col('.')
-      endif
-      normal! P
-    endfor
-    normal! `[
+    call s:do_comment_singleline(a:motion_wiseness, comment)
   endif
-
-  call setreg('"', reg_u[0], reg_u[1])
 endfunction
 
 
 
 
 function! operator#comment#uncomment(motion_wiseness)  "{{{2
-  let [lnum1, col1] = getpos("'[")[1:2]
-  let [lnum2, col2] = getpos("']")[1:2]
+  let comment = s:comment_pair()
 
-  let comment = map(s:comment_pair(), 'escape(v:val, "\\")')
-  let comment_multi_line_p = len(comment) > 1
-
-  call cursor(lnum1, col1)
-
-  if comment_multi_line_p
-    while line('.') <= lnum2 || col('.') <= col2
-      let begin_pos = searchpos('\V' . comment[0], 'Wc', lnum2)
-      if begin_pos == [0, 0]
-        break
-      elseif !s:comment_the_cursor_p()
-        if search('.', 'W') == 0
-          break
-        endif
-        continue
-      endif
-
-      if searchpair('\V' . comment[0],  '', '\V\s\*' . comment[1],
-      \             'W', '', lnum2) == 0
-        break
-      endif
-      normal! v
-      let end_pos = searchpos('\V' . comment[1], 'We', lnum2)
-      normal! "_d
-
-      call cursor(begin_pos)
-      if col('.') == col('$') - len(comment[0])
-        call search('\s\+', 'Wb', line('.'))
-      endif
-      normal! v
-      call search('\V' . comment[0] . '\+\s\?', 'We', line('.'))
-      normal! "_d
-      call cursor(end_pos)
-    endwhile
+  if len(comment) > 1
+    call s:do_uncomment_multiline(a:motion_wiseness, comment)
   else
-    while line('.') <= lnum2 || col('.') <= col2
-      if search('\V' . comment[0], 'Wc', lnum2) == 0
-        break
-      elseif !s:comment_the_cursor_p()
-        if search('.', 'W') == 0
-          break
-        endif
-        continue
-      endif
-
-      if col('.') == col('$') - len(comment[0])
-        call search('\s\+', 'Wb', line('.'))
-      endif
-      normal! v
-      call search('\V' . comment[0] . '\+\s\?', 'We', line('.'))
-      normal! "_d$
-    endwhile
+    call s:do_uncomment_singleline(a:motion_wiseness, comment)
   endif
-
-  call cursor(lnum1, col1)
 endfunction
 
 
@@ -141,7 +50,8 @@ endfunction
 
 " Misc.  "{{{1
 function! s:comment_pair()  "{{{2
-  return split(&l:commentstring, '\s*%s\s*')
+  return map(split(&l:commentstring, '\s*%s\s*'),
+  \          'escape(v:val, "\\")')
 endfunction
 
 
@@ -150,10 +60,146 @@ endfunction
 function! s:comment_the_cursor_p()  "{{{2
   for id in synstack(line('.'), col('.'))
     if synIDattr(synIDtrans(id), 'name') ==# 'Comment'
-      return 1
+      return !0
     endif
   endfor
   return 0
+endfunction
+
+
+
+
+function! s:do_comment_multiline(motion_wiseness, comment)  "{{{2
+  let reg_u = [@", getregtype('"')]
+
+  let [lnum1, col1] = getpos("'[")[1:2]
+  let [lnum2, col2] = getpos("']")[1:2]
+
+  call cursor(lnum2, col2)
+  if a:motion_wiseness ==# 'line'
+    normal! $
+  endif
+  let @" = (col('$') > 1 ? ' ' : '') . a:comment[1]
+  normal! p
+
+  call cursor(lnum1, col1)
+  let @" = a:comment[0] . (col('$') > 1 ? ' ' : '')
+  normal! P
+
+  call cursor(lnum1, col1)
+  call setreg('"', reg_u[0], reg_u[1])
+endfunction
+
+
+
+
+function! s:do_comment_singleline(motion_wiseness, comment)  "{{{2
+  let reg_u = [@", getregtype('"')]
+
+  let [lnum1, col1] = getpos("'[")[1:2]
+  let [lnum2, col2] = getpos("']")[1:2]
+
+  let lines = range(lnum1, lnum2)
+  if a:motion_wiseness ==# 'line'
+    call map(lines, '[v:val, 1]')
+  elseif a:motion_wiseness ==# 'block'
+    call map(lines, '[v:val, col1]')
+  else  " char
+    call map(lines, '[v:val, 1]')
+    let lines[0][1] = col1
+  endif
+
+  let last_col = 0
+
+  for [lnum, col] in lines
+    if a:motion_wiseness ==# 'line'
+      call cursor(lnum, 0)
+      normal! ^
+      if last_col < col('.')
+        call cursor(0, last_col)
+      endif
+    else
+      call cursor(lnum, col)
+    endif
+    let @" = repeat(' ', last_col - col('$')) . a:comment[0]
+    if col('$') > 1 && col('.') != col('$')
+      let @" .= ' '
+      let last_col = col('.')
+    endif
+    normal! P
+  endfor
+
+  call cursor(lnum1, col1)
+  call setreg('"', reg_u[0], reg_u[1])
+endfunction
+
+
+
+
+function! s:do_uncomment_multiline(motion_wiseness, comment)  "{{{2
+  let [lnum1, col1] = getpos("'[")[1:2]
+  let [lnum2, col2] = getpos("']")[1:2]
+
+  while line('.') <= lnum2 || col('.') <= col2
+    let begin_pos = searchpos('\V' . a:comment[0], 'Wc', lnum2)
+    if begin_pos == [0, 0]
+      break
+    elseif !s:comment_the_cursor_p()
+      if search('.', 'W') <= 0
+        break
+      endif
+      continue
+    endif
+
+    if searchpairpos('\V' . a:comment[0], '', '\V\s\*' . a:comment[1],
+    \                'W', '', lnum2) <= 0
+      break
+    endif
+
+    normal! v
+    let end_pos = searchpos('\V' . a:comment[1], 'We', lnum2)
+    normal! "_d
+    call cursor(begin_pos)
+
+    if col('.') == col('$') - len(a:comment[0])
+      call search('\s\+', 'Wb', line('.'))
+    endif
+    normal! v
+    call search('\V' . a:comment[0] . '\+\s\?', 'We', line('.'))
+    normal! "_d
+    call cursor(end_pos)
+  endwhile
+
+  call cursor(lnum1, col1)
+endfunction
+
+
+
+
+function! s:do_uncomment_singleline(motion_wiseness, comment)  "{{{2
+  let [lnum1, col1] = getpos("'[")[1:2]
+  let [lnum2, col2] = getpos("']")[1:2]
+
+  while line('.') <= lnum2 || col('.') <= col2
+    let begin_pos = searchpos('\V' . a:comment[0], 'Wc', lnum2)
+    if begin_pos == [0, 0]
+      break
+    elseif !s:comment_the_cursor_p()
+      if search('.', 'W') <= 0
+        break
+      endif
+      continue
+    endif
+
+    if col('.') == col('$') - len(a:comment[0])
+      call search('\s\+', 'Wb', line('.'))
+    endif
+    normal! v
+    call search('\V' . a:comment[0] . '\+\s\?', 'We', line('.'))
+    normal! "_d$
+  endwhile
+
+  call cursor(lnum1, col1)
 endfunction
 
 
