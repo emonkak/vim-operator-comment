@@ -151,8 +151,8 @@ function! s:do_uncomment_multiline(motion_wiseness, comment)  "{{{2
       continue
     endif
 
-    if searchpairpos('\V' . a:comment[0], '', '\V\s\*' . a:comment[1],
-    \                'W', '', lnum2) <= 0
+    if searchpair('\V' . a:comment[0], '', '\V\s\*' . a:comment[1],
+    \             'W', '', lnum2) <= 0
       break
     endif
 
