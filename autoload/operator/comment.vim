@@ -121,7 +121,8 @@ function! s:do_comment_singleline(motion_wiseness, comment)  "{{{2
     else
       call cursor(lnum, col)
     endif
-    let @" = repeat(' ', last_col - col('$')) . a:comment[0]
+    let @" = repeat(&l:expandtab ? ' ' : "\t", last_col - col('$'))
+    let @" .= a:comment[0]
     if col('$') > 1 && col('.') != col('$')
       let @" .= ' '
       let last_col = col('.')
