@@ -37,12 +37,19 @@ endfunction
 
 function! operator#comment#uncomment(motion_wiseness)  "{{{2
   let comment = s:comment_pair()
+  let original_foldenable = &l:foldenable
 
-  if len(comment) > 1
-    call s:do_uncomment_multiline(a:motion_wiseness, comment)
-  else
-    call s:do_uncomment_singleline(a:motion_wiseness, comment)
-  endif
+  setlocal nofoldenable
+
+  try
+    if len(comment) > 1
+      call s:do_uncomment_multiline(a:motion_wiseness, comment)
+    else
+      call s:do_uncomment_singleline(a:motion_wiseness, comment)
+    endif
+  finally
+    let &l:foldenable = original_foldenable
+  endtry
 endfunction
 
 
