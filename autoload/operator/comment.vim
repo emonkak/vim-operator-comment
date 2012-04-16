@@ -77,7 +77,7 @@ endfunction
 
 
 function! s:do_comment_multiline(motion_wiseness, comment)  "{{{2
-  let reg_u = [@", getregtype('"')]
+  let reg_0 = [@0, getregtype('0')]
 
   let [lnum1, col1] = getpos("'[")[1:2]
   let [lnum2, col2] = getpos("']")[1:2]
@@ -86,22 +86,22 @@ function! s:do_comment_multiline(motion_wiseness, comment)  "{{{2
   if a:motion_wiseness ==# 'line'
     normal! $
   endif
-  let @" = (col('$') > 1 ? ' ' : '') . a:comment[1]
-  normal! p
+  let @0 = (col('$') > 1 ? ' ' : '') . a:comment[1]
+  normal! "0p
 
   call cursor(lnum1, col1)
-  let @" = a:comment[0] . (col('$') > 1 ? ' ' : '')
-  normal! P
+  let @0 = a:comment[0] . (col('$') > 1 ? ' ' : '')
+  normal! "0P
 
   call cursor(lnum1, col1)
-  call setreg('"', reg_u[0], reg_u[1])
+  call setreg('0', reg_0[0], reg_0[1])
 endfunction
 
 
 
 
 function! s:do_comment_singleline(motion_wiseness, comment)  "{{{2
-  let reg_u = [@", getregtype('"')]
+  let reg_0 = [@0, getregtype('0')]
 
   let [lnum1, col1] = getpos("'[")[1:2]
   let [lnum2, col2] = getpos("']")[1:2]
@@ -128,17 +128,17 @@ function! s:do_comment_singleline(motion_wiseness, comment)  "{{{2
     else
       call cursor(lnum, col)
     endif
-    let @" = repeat(&l:expandtab ? ' ' : "\t", last_col - col('$'))
-    let @" .= a:comment[0]
+    let @0 = repeat(&l:expandtab ? ' ' : "\t", last_col - col('$'))
+    let @0 .= a:comment[0]
     if col('$') > 1 && col('.') != col('$')
-      let @" .= ' '
+      let @0 .= ' '
       let last_col = col('.')
     endif
-    normal! P
+    normal! "0P
   endfor
 
   call cursor(lnum1, col1)
-  call setreg('"', reg_u[0], reg_u[1])
+  call setreg('0', reg_0[0], reg_0[1])
 endfunction
 
 
