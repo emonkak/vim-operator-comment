@@ -90,6 +90,9 @@ function! s:do_comment_multiline(motion_wiseness, comment_start, comment_end)  "
   normal! "0p
 
   call cursor(lnum1, col1)
+  if a:motion_wiseness ==# 'line'
+    normal! ^
+  endif
   let @0 = a:comment_start . (col('$') > 1 ? ' ' : '')
   normal! "0P
 
