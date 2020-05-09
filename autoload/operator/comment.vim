@@ -195,7 +195,7 @@ function! s:do_uncomment_singleline(motion_wiseness, comment)  "{{{2
     let begin_pos = searchpos('\V' . a:comment, 'Wc', lnum2)
     if begin_pos == [0, 0]
       break
-    elseif !s:comment_the_cursor_p()
+    elseif !s:cursor_on_the_comment_p()
       if search('.', 'W') <= 0
         break
       endif
