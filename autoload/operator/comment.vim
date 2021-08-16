@@ -56,26 +56,6 @@ endfunction
 
 
 " Misc.  "{{{1
-function! s:comment_tokens()  "{{{2
-  return map(split(&l:commentstring, '\s*%s\s*'),
-  \          'escape(v:val, "\\")')
-endfunction
-
-
-
-
-function! s:cursor_on_the_comment_p()  "{{{2
-  for id in synstack(line('.'), col('.'))
-    if synIDattr(synIDtrans(id), 'name') ==# 'Comment'
-      return !0
-    endif
-  endfor
-  return 0
-endfunction
-
-
-
-
 function! s:do_comment_multiline(motion_wiseness, comment_start, comment_end)  "{{{2
   let reg_0 = [@0, getregtype('0')]
 
@@ -155,7 +135,7 @@ function! s:do_uncomment_multiline(motion_wiseness, comment_start, comment_end) 
     let begin_pos = searchpos('\V' . a:comment_start, 'Wc', lnum2)
     if begin_pos == [0, 0]
       break
-    elseif !s:cursor_on_the_comment_p()
+    elseif !s:within_comment()
       if search('.', 'W') <= 0
         break
       endif
@@ -195,7 +175,7 @@ function! s:do_uncomment_singleline(motion_wiseness, comment)  "{{{2
     let begin_pos = searchpos('\V' . a:comment, 'Wc', lnum2)
     if begin_pos == [0, 0]
       break
-    elseif !s:cursor_on_the_comment_p()
+    elseif !s:within_comment()
       if search('.', 'W') <= 0
         break
       endif
@@ -211,6 +191,26 @@ function! s:do_uncomment_singleline(motion_wiseness, comment)  "{{{2
   endwhile
 
   call cursor(lnum1, col1)
+endfunction
+
+
+
+
+function! s:comment_tokens()  "{{{2
+  return map(split(&l:commentstring, '\s*%s\s*'),
+  \          'escape(v:val, "\\")')
+endfunction
+
+
+
+
+function! s:within_comment()  "{{{2
+  for id in synstack(line('.'), col('.'))
+    if synIDattr(synIDtrans(id), 'name') ==# 'Comment'
+      return !0
+    endif
+  endfor
+  return 0
 endfunction
 
 
