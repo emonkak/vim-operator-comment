@@ -4,15 +4,12 @@ silent runtime! plugin/operator/comment.vim
 
 function! s:before() abort
   new
-  let body =<< trim END
-  foo
-  bar {
-    baz
-    qux
-  }
-  quux
-  END
-  silent put =body
+  put ='foo'
+  put ='bar {'
+  put ='  baz'
+  put ='  qux'
+  put ='}'
+  put ='quux'
   normal! ggdd
 endfunction
 
@@ -27,25 +24,25 @@ function! s:test_comment_singleline() abort
   map <buffer> _ <Plug>(operator-comment)
 
   execute 'normal __'
-  let expected =<< trim END
-  // foo
-  bar {
-    baz
-    qux
-  }
-  quux
-  END
+  let expected = [
+  \   '// foo',
+  \   'bar {',
+  \   '  baz',
+  \   '  qux',
+  \   '}',
+  \   'quux',
+  \ ]
   call assert_equal(expected, getline(1, line('$')), '')
 
   execute 'normal 3ggV4gg_'
-  let expected =<< trim END
-  // foo
-  bar {
-    // baz
-    // qux
-  }
-  quux
-  END
+  let expected = [
+  \   '// foo',
+  \   'bar {',
+  \   '  // baz',
+  \   '  // qux',
+  \   '}',
+  \   'quux',
+  \ ]
   call assert_equal(expected, getline(1, line('$')), '')
 
   call s:after()
@@ -58,25 +55,25 @@ function! s:test_comment_multiline() abort
   map <buffer> _ <Plug>(operator-comment)
 
   execute 'normal __'
-  let expected =<< trim END
-  /* foo */
-  bar {
-    baz
-    qux
-  }
-  quux
-  END
+  let expected = [
+  \   '/* foo */',
+  \   'bar {',
+  \   '  baz',
+  \   '  qux',
+  \   '}',
+  \   'quux',
+  \ ]
   call assert_equal(expected, getline(1, line('$')), '')
 
   execute 'normal 3ggV4gg_'
-  let expected =<< trim END
-  /* foo */
-  bar {
-    /* baz
-    qux */
-  }
-  quux
-  END
+  let expected = [
+  \   '/* foo */',
+  \   'bar {',
+  \   '  /* baz',
+  \   '  qux */',
+  \   '}',
+  \   'quux',
+  \ ]
   call assert_equal(expected, getline(1, line('$')), '')
 
   call s:after()
