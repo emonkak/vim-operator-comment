@@ -1,4 +1,6 @@
-runtime! plugin/operator/comment.vim
+silent packadd! vim-operator-user
+
+silent runtime! plugin/operator/comment.vim
 
 function! s:before() abort
   new
