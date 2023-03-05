@@ -74,7 +74,7 @@ function! s:compute_indent_in_block(start_lnum, end_lnum) abort
   for lnum in range(a:start_lnum, a:end_lnum)
     let indent = indent(lnum)
     if indent == 0 && getline(lnum) == ''
-      " Skip empty line
+      " Skip an empty line.
       continue
     endif
     if min_indent == -1 || min_indent > indent
@@ -110,6 +110,11 @@ endfunction
 function! s:delete_until(pattern, lnum, col) abort
   normal! v
   let position = searchpos(a:pattern, 'Wce', a:lnum)
+  if col('.') == col('$') - 1
+    " Remove tailing spaces.
+    normal! o
+    call search('\s*\%#', 'Wb', a:lnum)
+  endif
   normal! "_d
   return (position[1] - a:col) + 1
 endfunction
@@ -219,10 +224,7 @@ function! s:uncomment_singleline_comment(motion_wiseness, comment_marker) abort
   let [first_lnum, first_col, first_off] = getpos("'[")[1:]
   let [last_lnum, last_col, last_off] = getpos("']")[1:]
 
-  let pattern = '\V\%('
-  \           . '\^\s\*' . escape(a:comment_marker, '\\') . '\$\|'
-  \           . escape(a:comment_marker, '\\') . ' \?'
-  \           . '\)'
+  let pattern = '\V' . escape(a:comment_marker, '\\') . ' \?'
   let current_lnum = first_lnum
   let continued = 0
 
