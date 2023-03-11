@@ -99,8 +99,7 @@ function! s:contains_region(motion_wiseness, start_lnum, start_col, end_lnum, en
 endfunction
 
 function! s:create_singleline_comment(comment_marker, lnum, indent_col) abort
-  let col = virtcol2col(0, a:lnum, a:indent_col)
-  call cursor(a:lnum, col)
+  call s:set_virtual_cursor(a:lnum, a:indent_col)
   let insufficient_spaces = a:indent_col - virtcol('$')
   let comment_marker = s:indent_comment_marker(a:comment_marker,
   \                                            insufficient_spaces)
@@ -161,6 +160,28 @@ endfunction
 
 function! s:parse_comment_string(comment_string) abort
   return split(a:comment_string, '\s*%s\s*')
+endfunction
+
+function! s:set_virtual_cursor(lnum, virtual_col) abort
+  if exists('*virtcol2col')
+    let col = virtcol2col(0, a:lnum, a:virtual_col)
+    call cursor(a:lnum, col)
+  else
+    let line = getline(a:lnum)
+    let character_col = 0
+    let display_width = 0
+    for character in split(line, '.\zs')
+      let display_width += strdisplaywidth(character)
+      if display_width > a:virtual_col
+        break
+      endif
+      let character_col += 1
+      if display_width == a:virtual_col
+        break
+      endif
+    endfor
+    call setcursorcharpos(a:lnum, character_col)
+  endif
 endfunction
 
 function! s:uncomment_multiline_comment(motion_wiseness, start_comment_marker, end_comment_marker) abort
