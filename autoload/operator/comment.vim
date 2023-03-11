@@ -45,23 +45,23 @@ function! s:comment_out_with_singleline_comment(motion_wiseness, comment_marker)
 
   if a:motion_wiseness ==# 'char'
     let indent_col = virtcol('.')
-    call s:create_singleline_comment(a:comment_marker, first_lnum, indent_col)
+    call s:create_indented_comment(a:comment_marker, first_lnum, indent_col)
     let indent_col = min([
     \   s:compute_indent_in_block(first_lnum + 1, last_lnum) + 1,
     \   indent_col,
     \ ])
     for lnum in range(first_lnum + 1, last_lnum)
-      call s:create_singleline_comment(a:comment_marker, lnum, indent_col)
+      call s:create_indented_comment(a:comment_marker, lnum, indent_col)
     endfor
   elseif a:motion_wiseness ==# 'line'
     let indent_col = s:compute_indent_in_block(first_lnum, last_lnum) + 1
     for lnum in range(first_lnum, last_lnum)
-      call s:create_singleline_comment(a:comment_marker, lnum, indent_col)
+      call s:create_indented_comment(a:comment_marker, lnum, indent_col)
     endfor
   else  " block
     let indent_col = virtcol('.')
     for lnum in range(first_lnum, last_lnum)
-      call s:create_singleline_comment(a:comment_marker, lnum, indent_col)
+      call s:create_indented_comment(a:comment_marker, lnum, indent_col)
     endfor
   endif
 
@@ -98,7 +98,7 @@ function! s:contains_region(motion_wiseness, start_lnum, start_col, end_lnum, en
   endif
 endfunction
 
-function! s:create_singleline_comment(comment_marker, lnum, indent_col) abort
+function! s:create_indented_comment(comment_marker, lnum, indent_col) abort
   call s:set_virtual_cursor(a:lnum, a:indent_col)
   let insufficient_spaces = a:indent_col - virtcol('$')
   let comment_marker = s:indent_comment_marker(a:comment_marker,
