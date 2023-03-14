@@ -167,20 +167,10 @@ function! s:set_virtual_cursor(lnum, virtual_col) abort
     let col = virtcol2col(0, a:lnum, a:virtual_col)
     call cursor(a:lnum, col)
   else
-    let line = getline(a:lnum)
-    let character_col = 0
-    let display_width = 0
-    for character in split(line, '.\zs')
-      let display_width += strdisplaywidth(character)
-      if display_width > a:virtual_col
-        break
-      endif
-      let character_col += 1
-      if display_width == a:virtual_col
-        break
-      endif
-    endfor
-    call setcursorcharpos(a:lnum, character_col)
+    call cursor(a:lnum, a:virtual_col)
+    while a:virtual_col < virtcol('.')
+      normal! h
+    endwhile
   endif
 endfunction
 
@@ -195,15 +185,15 @@ function! s:uncomment_multiline_comment(motion_wiseness, start_comment_marker, e
 
   while current_lnum <= last_lnum
     let flags = continued ? 'W':  'Wc'
-    let start_pos = searchpos(start_pattern, flags, last_lnum, 0,
-    \                         'exists("g:syntax_on") && !s:in_comment()')
+    let start_pos = searchpos(start_pattern, flags, last_lnum, 0)
     if start_pos == [0, 0]
       break
     endif
-    if !s:contains_region(a:motion_wiseness,
-    \                     first_lnum, first_col + first_off,
-    \                     last_lnum, last_col + last_off,
-    \                     start_pos[0], start_pos[1])
+    if (exists("g:syntax_on") && !s:in_comment())
+    \  || !s:contains_region(a:motion_wiseness,
+    \                        first_lnum, first_col + first_off,
+    \                        last_lnum, last_col + last_off,
+    \                        start_pos[0], start_pos[1])
       let continued = 1
       continue
     endif
@@ -256,15 +246,15 @@ function! s:uncomment_singleline_comment(motion_wiseness, comment_marker) abort
 
   while current_lnum <= last_lnum
     let flags = continued ? 'W':  'Wc'
-    let start_pos = searchpos(pattern, flags, last_lnum, 0,
-    \                         'exists("g:syntax_on") && !s:in_comment()')
+    let start_pos = searchpos(pattern, flags, last_lnum, 0)
     if start_pos == [0, 0]
       break
     endif
-    if !s:contains_region(a:motion_wiseness,
-    \                     first_lnum, first_col + first_off,
-    \                     last_lnum, last_col + last_off,
-    \                     start_pos[0], start_pos[1])
+    if (exists("g:syntax_on") && !s:in_comment())
+    \  || !s:contains_region(a:motion_wiseness,
+    \                        first_lnum, first_col + first_off,
+    \                        last_lnum, last_col + last_off,
+    \                        start_pos[0], start_pos[1])
       let continued = 1
       continue
     endif
