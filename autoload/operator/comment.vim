@@ -110,7 +110,7 @@ function! s:delete_until(pattern, lnum, col) abort
   normal! v
   let position = searchpos(a:pattern, 'Wce', a:lnum)
   if col('.') == col('$') - 1
-    " Remove tailing spaces.
+    " Remove trailing spaces.
     normal! o
     call search('\s*\%#', 'Wb', a:lnum)
   endif
