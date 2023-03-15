@@ -1,0 +1,71 @@
+*operator-comment.txt*	A operator to comment or uncomment stuff
+
+Author: Shota Nozaki <emonkak@gmail.com>
+License: MIT license
+
+==============================================================================
+CONTENTS					*operator-comment-contents*
+
+Introduction	|operator-comment-introduction|
+Usage		|operator-comment-usage|
+Interface	|operator-comment-interface|
+  Key Mappings	|operator-comment-key-mappings|
+
+==============================================================================
+INTRODUCTION				*operator-comment-introduction*
+
+*operator-comment* is a Vim plugin to provide an operator to comment or
+uncomment a specified text.
+
+Requirements:
+
+- Vim 8.0 or later
+- |operator-user| 0.1.0 or later
+  https://github.com/kana/vim-operator-user
+
+==============================================================================
+USAGE						*operator-comment-usage*
+
+At first, you have to map arbitrary key sequences to
+|<Plug>(operator-comment)| and |<Plug>(opeartor-uncomment)| like the
+following:
+>
+	map gc  <Plug>(operator-comment)
+	map gC  <Plug>(operator-uncomment)
+<
+Suppose that you edit a buffer with the following the code of C language:
+>
+	foo(123);
+<
+Then, when you execute |<Plug>(operator-comment)| for this line, the code will
+be changed to the following text depending on 'commentstring' value (suppose
+that value is "/*%s*/"):
+>
+	/* foo(123); */
+<
+If you prefer single-line comments, you have to change 'commentstring' to
+"//%s". Then, the operator will change the code to the following text:
+>
+	// foo(123);
+<
+If you want to uncomment the text, you can execute
+|<Plug>(operator-uncomment)|. However, the text must belong to "Comment" syntax
+group.
+>
+	foo(123);
+<
+
+==============================================================================
+INTERFACE					*operator-comment-interface*
+
+------------------------------------------------------------------------------
+KEY MAPPINGS				*operator-comment-key-mappings*
+
+<Plug>(operator-comment){motion}		*<Plug>(operator-comment)*
+	Comment out {motion} text.
+
+<Plug>(operator-uncomment){motion}		*<Plug>(operator-uncomment)*
+	Uncomment {motion} text.
+
+==============================================================================
+vim:tw=78:ts=8:ft=help
