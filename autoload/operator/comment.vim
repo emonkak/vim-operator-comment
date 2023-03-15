@@ -189,7 +189,7 @@ function! s:uncomment_multiline_comment(motion_wiseness, start_comment_marker, e
     if start_pos == [0, 0]
       break
     endif
-    if (exists("g:syntax_on") && !s:in_comment())
+    if (exists('g:syntax_on') && !s:in_comment())
     \  || !s:contains_region(a:motion_wiseness,
     \                        first_lnum, first_col + first_off,
     \                        last_lnum, last_col + last_off,
@@ -250,7 +250,7 @@ function! s:uncomment_singleline_comment(motion_wiseness, comment_marker) abort
     if start_pos == [0, 0]
       break
     endif
-    if (exists("g:syntax_on") && !s:in_comment())
+    if (exists('g:syntax_on') && !s:in_comment())
     \  || !s:contains_region(a:motion_wiseness,
     \                        first_lnum, first_col + first_off,
     \                        last_lnum, last_col + last_off,
