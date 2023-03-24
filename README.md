@@ -1,6 +1,6 @@
 # operator-comment
 
-**operator-comment** is a very simple plugin that only provides two operators for comment and uncomment. A comment format is only determined by 'commentstring' option. Plugin specific settings are nothing.
+**operator-comment** is a very simple plugin that only provides two operators to comment out and uncomment. A comment format is only determined by 'commentstring' option. Plugin specific settings are nothing.
 
 ## Requirements
 

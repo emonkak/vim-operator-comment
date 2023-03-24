@@ -1,4 +1,4 @@
-*operator-comment.txt*	A operator to comment or uncomment stuff
+*operator-comment.txt*	Operators to comment out or uncomment a text
 
 Author: Shota Nozaki <emonkak@gmail.com>
 License: MIT license
@@ -14,8 +14,8 @@ Interface	|operator-comment-interface|
 ==============================================================================
 INTRODUCTION				*operator-comment-introduction*
 
-*operator-comment* is a Vim plugin to provide an operator to comment or
-uncomment a specified text.
+*operator-comment* is a Vim plugin to provide two operators to comment out or
+uncomment a text in the range.
 
 Requirements:
 
