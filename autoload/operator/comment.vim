@@ -138,12 +138,13 @@ function! s:indent_comment_marker(comment_marker, insufficient_spaces) abort
 endfunction
 
 function! s:insert_text_at_cursor(put_command, text) abort
-  let reg_u = [@", getregtype('"')]
+  let reg_value = @"
+  let reg_type = getregtype('"')
   call setreg('"', a:text, 'v')
   try
     execute 'normal!' ('""' . a:put_command)
   finally
-    call setreg('"', reg_u[0], reg_u[1])
+    call setreg('"', reg_value, reg_type)
   endtry
 endfunction
 
