@@ -887,7 +887,7 @@ function! s:test_uncomment_multiline_blockwise() abort
   call s:do_test('v$gC', source, expected, options)
 endfunction
 
-function! s:do_test(key_sequences, source, expected, options) abort
+function! s:do_test(key_strokes, source, expected, options) abort
   new
   for [key, value] in items(a:options)
     execute 'setlocal' (key . '=' . value)
@@ -895,7 +895,7 @@ function! s:do_test(key_sequences, source, expected, options) abort
   map <buffer> gc <Plug>(operator-comment)
   map <buffer> gC <Plug>(operator-uncomment)
   call setline(1, a:source)
-  execute 'normal' a:key_sequences
+  call feedkeys(a:key_strokes, 'x')
   call assert_equal(a:expected, getline(1, line('$')))
   close!
 endfunction
