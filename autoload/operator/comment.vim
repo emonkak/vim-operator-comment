@@ -1,21 +1,33 @@
 function! operator#comment#comment(motion_wiseness) abort
-  let tokens = s:parse_comment_string(&l:commentstring)
-  if len(tokens) == 1
-    call s:comment_out_with_singleline_comment(a:motion_wiseness, tokens[0])
-  elseif len(tokens) > 1
-    call s:comment_out_with_multiline_comment(a:motion_wiseness,
-    \                                         tokens[0],
-    \                                         tokens[1])
-  endif
+  let original_foldenable = &l:foldenable
+  try
+    setlocal nofoldenable
+    let tokens = s:parse_comment_string(&l:commentstring)
+    if len(tokens) == 1
+      call s:comment_out_with_singleline_comment(a:motion_wiseness, tokens[0])
+    elseif len(tokens) > 1
+      call s:comment_out_with_multiline_comment(a:motion_wiseness,
+      \                                         tokens[0],
+      \                                         tokens[1])
+    endif
+  finally
+    let &l:foldenable = original_foldenable
+  endtry
 endfunction
 
 function! operator#comment#uncomment(motion_wiseness) abort
-  let tokens = s:parse_comment_string(&l:commentstring)
-  if len(tokens) == 1
-    call s:uncomment_singleline_comment(a:motion_wiseness, tokens[0])
-  elseif len(tokens) > 1
-    call s:uncomment_multiline_comment(a:motion_wiseness, tokens[0], tokens[1])
-  endif
+  let original_foldenable = &l:foldenable
+  try
+    setlocal nofoldenable
+    let tokens = s:parse_comment_string(&l:commentstring)
+    if len(tokens) == 1
+      call s:uncomment_singleline_comment(a:motion_wiseness, tokens[0])
+    elseif len(tokens) > 1
+      call s:uncomment_multiline_comment(a:motion_wiseness, tokens[0], tokens[1])
+    endif
+  finally
+    let &l:foldenable = original_foldenable
+  endtry
 endfunction
 
 function! s:comment_out_with_multiline_comment(motion_wiseness, start_comment_marker, end_comment_marker) abort
