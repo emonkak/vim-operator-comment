@@ -897,5 +897,5 @@ function! s:do_test(key_strokes, source, expected, options) abort
   call setline(1, a:source)
   call feedkeys(a:key_strokes, 'x')
   call assert_equal(a:expected, getline(1, line('$')))
-  close!
+  bdelete!
 endfunction
