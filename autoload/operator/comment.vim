@@ -39,14 +39,14 @@ function! s:comment_out_with_multiline_comment(motion_wiseness, start_comment_ma
     normal! $
   endif
   let comment = (col('.') < col('$') ? ' ' : '') . a:end_comment_marker
-  call s:insert_text_at_cursor('p', comment)
+  call s:put_text('p', comment)
 
   call cursor(first_lnum, first_col)
   if a:motion_wiseness ==# 'line'
     normal! ^
   endif
   let comment = a:start_comment_marker . (col('.') < col('$') ? ' ' : '')
-  call s:insert_text_at_cursor('P', comment)
+  call s:put_text('P', comment)
 
   call cursor(first_lnum, first_col)
 endfunction
@@ -115,7 +115,7 @@ function! s:create_indented_comment(comment_marker, lnum, indent_col) abort
   let insufficient_spaces = a:indent_col - virtcol('$')
   let comment_marker = s:indent_comment_marker(a:comment_marker,
   \                                            insufficient_spaces)
-  call s:insert_text_at_cursor('P', comment_marker)
+  call s:put_text('P', comment_marker)
 endfunction
 
 function! s:delete_until(pattern, lnum, col) abort
@@ -149,17 +149,6 @@ function! s:indent_comment_marker(comment_marker, insufficient_spaces) abort
   endif
 endfunction
 
-function! s:insert_text_at_cursor(put_command, text) abort
-  let reg_value = @"
-  let reg_type = getregtype('"')
-  call setreg('"', a:text, 'v')
-  try
-    execute 'normal!' ('""' . a:put_command)
-  finally
-    call setreg('"', reg_value, reg_type)
-  endtry
-endfunction
-
 function! s:make_indent_characters(request_spaces) abort
   if &l:expandtab
     let spaces = repeat(' ', a:request_spaces)
@@ -173,6 +162,17 @@ endfunction
 
 function! s:parse_comment_string(comment_string) abort
   return split(a:comment_string, '\s*%s\s*')
+endfunction
+
+function! s:put_text(command, text) abort
+  let reg_value = @"
+  let reg_type = getregtype('"')
+  call setreg('"', a:text, 'v')
+  try
+    execute 'normal!' ('""' . a:command)
+  finally
+    call setreg('"', reg_value, reg_type)
+  endtry
 endfunction
 
 function! s:set_virtual_cursor(lnum, virtual_col) abort
