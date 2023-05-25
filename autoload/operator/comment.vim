@@ -194,10 +194,9 @@ function! s:uncomment_multiline_comment(motion_wiseness, start_comment_marker, e
   let start_pattern = '\V' . escape(a:start_comment_marker, '\\') . ' \?'
   let end_pattern = '\V \?' . escape(a:end_comment_marker, '\\')
   let current_lnum = first_lnum
-  let continued = 0
+  let flags = 'Wc'
 
   while current_lnum <= last_lnum
-    let flags = continued ? 'W':  'Wc'
     let start_pos = searchpos(start_pattern, flags, last_lnum, 0)
     if start_pos == [0, 0]
       break
@@ -207,7 +206,7 @@ function! s:uncomment_multiline_comment(motion_wiseness, start_comment_marker, e
     \                        first_lnum, first_col + first_off,
     \                        last_lnum, last_col + last_off,
     \                        start_pos[0], start_pos[1])
-      let continued = 1
+      let flags = 'W'
       continue
     endif
 
@@ -221,7 +220,7 @@ function! s:uncomment_multiline_comment(motion_wiseness, start_comment_marker, e
     \                     first_lnum, first_col + first_off,
     \                     last_lnum, last_col + last_off,
     \                     end_pos[0], end_pos[1])
-      let continued = 1
+      let flags = 'W'
       continue
     endif
 
@@ -243,7 +242,7 @@ function! s:uncomment_multiline_comment(motion_wiseness, start_comment_marker, e
     call cursor(end_pos)
 
     let current_lnum = end_pos[0]
-    let continued = 0
+    let flags = 'Wc'
   endwhile
 
   call cursor(first_lnum, first_col)
@@ -255,10 +254,9 @@ function! s:uncomment_singleline_comment(motion_wiseness, comment_marker) abort
 
   let pattern = '\V' . escape(a:comment_marker, '\\') . ' \?'
   let current_lnum = first_lnum
-  let continued = 0
+  let flags = 'Wc'
 
   while current_lnum <= last_lnum
-    let flags = continued ? 'W':  'Wc'
     let start_pos = searchpos(pattern, flags, last_lnum, 0)
     if start_pos == [0, 0]
       break
@@ -268,7 +266,7 @@ function! s:uncomment_singleline_comment(motion_wiseness, comment_marker) abort
     \                        first_lnum, first_col + first_off,
     \                        last_lnum, last_col + last_off,
     \                        start_pos[0], start_pos[1])
-      let continued = 1
+      let flags = 'W'
       continue
     endif
 
@@ -276,7 +274,7 @@ function! s:uncomment_singleline_comment(motion_wiseness, comment_marker) abort
     call cursor(start_pos[0] + 1, 1)
 
     let current_lnum = start_pos[0] + 1
-    let continued = 0
+    let flags = 'Wc'
   endwhile
 
   call cursor(first_lnum, first_col)
