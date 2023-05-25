@@ -254,28 +254,36 @@ function! s:uncomment_singleline_comment(motion_wiseness, comment_marker) abort
 
   let pattern = '\V' . escape(a:comment_marker, '\\') . ' \?'
   let current_lnum = first_lnum
+  let positions_to_delete = []
   let flags = 'Wc'
 
   while current_lnum <= last_lnum
-    let start_pos = searchpos(pattern, flags, last_lnum, 0)
-    if start_pos == [0, 0]
+    let pos = searchpos(pattern, flags, last_lnum, 0)
+    if pos == [0, 0]
       break
     endif
     if (exists('g:syntax_on') && !s:in_comment())
     \  || !s:contains_region(a:motion_wiseness,
     \                        first_lnum, first_col + first_off,
     \                        last_lnum, last_col + last_off,
-    \                        start_pos[0], start_pos[1])
+    \                        pos[0], pos[1])
       let flags = 'W'
       continue
     endif
 
-    call s:delete_until(pattern, start_pos[0], start_pos[1])
-    call cursor(start_pos[0] + 1, 1)
+    call add(positions_to_delete, pos)
 
-    let current_lnum = start_pos[0] + 1
+    " Move the cursor to the next line.
+    call cursor(pos[0] + 1, 1)
+
+    let current_lnum = pos[0] + 1
     let flags = 'Wc'
   endwhile
+
+  for pos in positions_to_delete
+    call cursor(pos)
+    call s:delete_until(pattern, pos[0], pos[1])
+  endfor
 
   call cursor(first_lnum, first_col)
 endfunction
