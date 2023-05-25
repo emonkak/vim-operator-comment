@@ -25,4 +25,4 @@ jobs:
         with:
           submodules: recursive
       - name: Run tests
-        run: VIM=${{ matrix.executable }} ./test.vim
+        run: VIMPROG=${{ matrix.executable }} ./test.vim
