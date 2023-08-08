@@ -1,12 +1,12 @@
-#!/bin/env -S bash -c '${VIMPROG-vim} -u NONE -i NONE -N -n -E -s -S "$0" <(IFS=$\'\n\'; echo "$*")'
+#!/bin/env -S bash -c '${VIMPROG-vim} -u NONE -i NONE -N -n -X -e -s -S "$0" <(IFS=$\'\n\'; echo "$*")'
 
 function! s:run(package_dir) abort
   set nohidden noswapfile
 
   let args = filter(getline(1, line('$')), 'v:val != ""')
 
-  %argdelete
-  %bwipeout!
+  silent! %argdelete
+  silent! %bwipeout!
 
   let &runtimepath .= ',' . a:package_dir
   let &packpath .= ',' . a:package_dir
