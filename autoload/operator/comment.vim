@@ -1,5 +1,6 @@
 function! operator#comment#comment(motion_wiseness) abort
   let original_foldenable = &l:foldenable
+  let original_view = winsaveview()
   try
     setlocal nofoldenable
     let tokens = s:parse_comment_string(&l:commentstring)
@@ -12,11 +13,13 @@ function! operator#comment#comment(motion_wiseness) abort
     endif
   finally
     let &l:foldenable = original_foldenable
+    call winrestview(original_view)
   endtry
 endfunction
 
 function! operator#comment#uncomment(motion_wiseness) abort
   let original_foldenable = &l:foldenable
+  let original_view = winsaveview()
   try
     setlocal nofoldenable
     let tokens = s:parse_comment_string(&l:commentstring)
@@ -27,6 +30,7 @@ function! operator#comment#uncomment(motion_wiseness) abort
     endif
   finally
     let &l:foldenable = original_foldenable
+    call winrestview(original_view)
   endtry
 endfunction
 
