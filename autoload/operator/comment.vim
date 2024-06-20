@@ -34,6 +34,18 @@ function! operator#comment#uncomment(motion_wiseness) abort
   endtry
 endfunction
 
+function! s:check_comment_syntax() abort
+  if &l:syntax == ''
+    return 1
+  endif
+  for id in synstack(line('.'), col('.'))
+    if synIDattr(synIDtrans(id), 'name') ==# 'Comment'
+      return 1
+    endif
+  endfor
+  return 0
+endfunction
+
 function! s:comment_out_with_multiline_comment(motion_wiseness, start_comment_marker, end_comment_marker) abort
   let [first_lnum, first_col] = getpos("'[")[1:2]
   let [last_lnum, last_col] = getpos("']")[1:2]
@@ -134,15 +146,6 @@ function! s:delete_until(pattern, lnum, col) abort
   return (position[1] - a:col) + 1
 endfunction
 
-function! s:in_comment() abort
-  for id in synstack(line('.'), col('.'))
-    if synIDattr(synIDtrans(id), 'name') ==# 'Comment'
-      return 1
-    endif
-  endfor
-  return 0
-endfunction
-
 function! s:indent_comment_marker(comment_marker, insufficient_spaces) abort
   if a:insufficient_spaces > 0
     return s:make_indent_characters(a:insufficient_spaces) . a:comment_marker
@@ -205,7 +208,7 @@ function! s:uncomment_multiline_comment(motion_wiseness, start_comment_marker, e
     if start_pos == [0, 0]
       break
     endif
-    if (exists('g:syntax_on') && !s:in_comment())
+    if !s:check_comment_syntax()
     \  || !s:contains_region(a:motion_wiseness,
     \                        first_lnum, first_col + first_off,
     \                        last_lnum, last_col + last_off,
@@ -215,7 +218,7 @@ function! s:uncomment_multiline_comment(motion_wiseness, start_comment_marker, e
     endif
 
     let end_pos = searchpairpos(start_pattern, '', end_pattern, 'W',
-    \                           'exists("g:syntax_on") && !s:in_comment()',
+    \                           '!s:check_comment_syntax()',
     \                           last_lnum)
     if end_pos == [0, 0]
       break
@@ -266,7 +269,7 @@ function! s:uncomment_singleline_comment(motion_wiseness, comment_marker) abort
     if pos == [0, 0]
       break
     endif
-    if (exists('g:syntax_on') && !s:in_comment())
+    if !s:check_comment_syntax()
     \  || !s:contains_region(a:motion_wiseness,
     \                        first_lnum, first_col + first_off,
     \                        last_lnum, last_col + last_off,
