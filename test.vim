@@ -1,6 +1,6 @@
 #!/bin/env -S bash -c '${VIMPROG-vim} -u NONE -i NONE -N -n -X -e -s -S "$0" <(IFS=$\'\n\'; echo "$*")'
 
-function! s:run(package_dir) abort
+function! s:run(root_dir) abort
   set nohidden noswapfile
 
   let args = filter(getline(1, line('$')), 'v:val != ""')
@@ -8,39 +8,9 @@ function! s:run(package_dir) abort
   silent! %argdelete
   silent! %bwipeout!
 
-  let &runtimepath .= ',' . a:package_dir
-  let &packpath .= ',' . a:package_dir
+  let [test_groups, total_tests] = s:load_test_sources(a:root_dir)
 
-  for test_file in globpath(a:package_dir, 'test/**/*_test.vim', 0, 1)
-    source `=test_file`
-  endfor
-
-  let script_paths = {}
-  for line in split(execute('0verbose scriptnames'), '\n')
-    let matches = matchlist(line, '^\s*\(\d\+\):\s\(.*\)')
-    if empty(matches)
-      continue
-    endif
-    let script_num = matches[1]
-    let script_path = fnamemodify(matches[2], ':p')
-    if stridx(script_path, a:package_dir . '/test/') == 0
-      let script_paths[script_num] = script_path
-    endif
-  endfor
-
-  let test_functions = s:shuffle(filter(
-  \  map(
-  \    split(execute('0verbose function'), '\n'),
-  \    { i, value ->
-  \      matchstr(value, '^function \zs<SNR>\d\+_test\%(_\w\+\)\?\>') }
-  \  ),
-  \  { i, value -> has_key(script_paths, matchstr(value, '^<SNR>\zs\d\+')) }
-  \ ))
-
-  echo 'running'
-  \    len(test_functions)
-  \    (len(test_functions) > 1 ? 'tests' : 'test')
-  \    "\n"
+  echo 'running' total_tests 'test(s)' "\n"
 
   let failed = 0
   let passed = 0
@@ -49,80 +19,97 @@ function! s:run(package_dir) abort
   let errors = []
   let start_time = reltime()
 
-  for test_function in test_functions
-    let script_num = matchstr(test_function, '^<SNR>\zs\d\+')
-    let script_name = fnamemodify(script_paths[script_num], ':.')
-    let test_name = substitute(test_function, '^<SNR>\d\+_', '', 'I')
-    let full_name = script_name . '::' . test_name
+  for [script_num, test_group] in s:shuffle(items(test_groups))
+    let aborted = 0
 
-    if max(map(copy(args), 'stridx(full_name, v:val)')) == -1
-      let filtered_out += 1
-      continue
+    if test_group.before isnot 0
+      call call(test_group.before, [])
     endif
 
-    echon full_name ' ... '
+    for test_function in s:shuffle(test_group.tests)
+      let script_name = fnamemodify(test_group.script, ':.')
+      let test_name = substitute(test_function, '<SNR>\d\+_', '', 'I')
+      let full_name = script_name . '::' . test_name
 
-    let v:errors = []
-    try
-      let return_value = call(test_function, [])
-    catch
-      let return_value = -1
-      let message = join(split(v:throwpoint, '\.\.')[1:], "\n")
-      \           . "\n"
-      \           . v:exception
-      call add(errors, {
-      \   'script_name': script_name,
-      \   'test_name': test_name,
-      \   'messages': [message],
-      \ })
-    endtry
+      if max(map(copy(args), 'stridx(full_name, v:val)')) == -1
+        let filtered_out += 1
+        continue
+      endif
 
-    if len(v:errors) > 0
-      let messages = map(
-      \   copy(v:errors),
-      \   { i, message -> substitute(
-      \       join(split(message, '\.\.'), "\n"),
-      \       '^\S\+\zs\s\zeline\s\d\+:',
-      \       "\n",
-      \       ''
-      \     )
-      \   }
-      \ )
-      call add(errors, {
-      \   'script_name': script_name,
-      \   'test_name': test_name,
-      \   'messages': messages,
-      \ })
+      echon full_name ' ... '
+
+      let v:errors = []
+
+      try
+        let return_value = call(test_function, [])
+      catch
+        let return_value = -1
+        let message = join(split(v:throwpoint, '\.\.')[1:], "\n")
+        \           . "\n"
+        \           . v:exception
+        call add(errors, {
+        \   'script_name': script_name,
+        \   'test_name': test_name,
+        \   'messages': [message],
+        \ })
+      endtry
+
+      if len(v:errors) > 0
+        let messages = map(
+        \   copy(v:errors),
+        \   { i, message -> substitute(
+        \       join(split(message, '\.\.'), "\n"),
+        \       '^\S\+\zs\s\zeline\s\d\+:',
+        \       "\n",
+        \       ''
+        \     )
+        \   }
+        \ )
+        call add(errors, {
+        \   'script_name': script_name,
+        \   'test_name': test_name,
+        \   'messages': messages,
+        \ })
+      endif
+
+      if type(return_value) == v:t_string
+        call add(errors, {
+        \   'script_name': script_name,
+        \   'test_name': test_name,
+        \   'messages': [return_value],
+        \ })
+        let ignored += 1
+        echon 'ignored' "\n"
+      elseif return_value == -1 || len(v:errors) > 0
+        let failed += 1
+        echon 'FAILED' "\n"
+      else
+        let passed += 1
+        echon 'ok' "\n"
+      endif
+
+      if len(getbufinfo({ 'buflisted': 1 })) > 1
+      \  || line('$') > 1
+      \  || col('$') > 1
+      \  || winnr('$') > 1
+      \  || tabpagenr('$') > 1
+        call add(errors, {
+        \   'script_name': script_name,
+        \   'test_name': test_name,
+        \   'messages': [
+        \     'CAUTION: Unclean buffers, windows, or tabs were found, therefore the execution of remaining tests has been aborted.'
+        \   ],
+        \ })
+        let aborted = 1
+        break
+      endif
+    endfor
+
+    if test_group.after isnot 0
+      call call(test_group.after, [])
     endif
 
-    if type(return_value) == v:t_string
-      call add(errors, {
-      \   'script_name': script_name,
-      \   'test_name': test_name,
-      \   'messages': [return_value],
-      \ })
-      let ignored += 1
-      echon 'ignored' "\n"
-    elseif return_value == -1 || len(v:errors) > 0
-      let failed += 1
-      echon 'FAILED' "\n"
-    else
-      let passed += 1
-      echon 'ok' "\n"
-    endif
-
-    if len(getbufinfo({ 'buflisted': 1 })) > 1
-    \  || line('$') > 1
-    \  || col('$') > 1
-    \  || winnr('$') > 1
-    \  || tabpagenr('$') > 1
-      call add(errors, {
-      \   'script_name': script_name,
-      \   'test_name': test_name,
-      \   'messages': [
-      \     'CAUTION: Unclean buffers, windows, or tabs were found, therefore the execution of remaining tests has been aborted.'
-      \   ],
-      \ })
+    if aborted
       break
     endif
   endfor
@@ -138,7 +125,7 @@ function! s:run(package_dir) abort
   endfor
 
   echo 'test result:'
-  \    (failed > 0 ? 'FAILED.' : 'ok.')
+  \    (aborted ? 'ABORTED.' : failed > 0 ? 'FAILED.' : 'ok.')
   \    passed 'passed;'
   \    failed 'failed;'
   \    ignored 'ignored;'
@@ -146,11 +133,65 @@ function! s:run(package_dir) abort
   \    'finished in' (elapsed_time . 's')
   \    "\n"
 
-  if failed > 0
+  if aborted || failed > 0
     cquit!
   else
     qall!
   endif
+endfunction
+
+function! s:load_test_sources(root_dir) abort
+  let &runtimepath .= ',' . a:root_dir
+  let &packpath .= ',' . a:root_dir
+
+  for test_file in globpath(a:root_dir, 'test/**/*_test.vim', 0, 1)
+    source `=test_file`
+  endfor
+
+  let script_paths = {}
+
+  for line in split(execute('0verbose scriptnames'), '\n')
+    let matches = matchlist(line, '^\s*\(\d\+\):\s\(.*\)')
+    if empty(matches)
+      continue
+    endif
+    let script_num = matches[1]
+    let script_path = fnamemodify(matches[2], ':p')
+    if stridx(script_path, a:root_dir . '/test/') == 0
+      let script_paths[script_num] = script_path
+    endif
+  endfor
+
+  let raw_funcitons = split(execute('0verbose function'), '\n')
+  let test_groups = {}
+  let total_tests = 0
+
+  for raw_function in raw_funcitons
+    let script_num = matchstr(raw_function, '<SNR>\zs\d\+')
+    if !has_key(script_paths, script_num)
+      continue
+    endif
+    if !has_key(test_groups, script_num)
+      let test_groups[script_num] = {
+      \   'script': script_paths[script_num],
+      \   'before': 0,
+      \   'after': 0,
+      \   'tests': [],
+      \ }
+    endif
+    let function_name = matchstr(raw_function, '<SNR>\d\+_\a\w*\>')
+    let test_name = substitute(function_name, '<SNR>\d\+_', '', 'I')
+    if test_name ==# 'before'
+      let test_groups[script_num].before = function_name
+    elseif test_name ==# 'after'
+      let test_groups[script_num].after = function_name
+    elseif test_name =~# '^test_'
+      call add(test_groups[script_num].tests, function_name)
+      let total_tests += 1
+    endif
+  endfor
+
+  return [test_groups, total_tests]
 endfunction
 
 function! s:shuffle(elements) abort
